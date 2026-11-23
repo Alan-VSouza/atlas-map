@@ -1,0 +1,11 @@
+# gerados
+__pycache__/
+*.pyc
+dist/
+shots/
+
+# ferramentas locais
+.playwright-cli/
+.netlify/
+.vercel/
+node_modules/
