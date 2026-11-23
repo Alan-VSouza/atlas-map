@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--HEAD-START-->
+<title>ATLAS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%274%27 fill=%27%231d5fd1%27/%3E%3Cpath d=%27M4 12 8 4l4 8%27 stroke=%27white%27 stroke-width=%272%27 fill=%27none%27/%3E%3C/svg%3E">
+<meta name="description" content="Cidade simulada em que cada parte roda numa estrutura de dados escrita do zero.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<!--CSS-->
+<link rel="stylesheet" href="style.css">
+<!--/CSS-->
+<!--HEAD-END-->
+</head>
+<body>
+<!--BODY-START-->
+<div id="app">
+  <main class="map" id="mapwrap" aria-label="Mapa">
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <canvas id="dyn" aria-hidden="true"></canvas>
+    <canvas id="lbl" aria-hidden="true"></canvas>
+    <canvas id="fg" tabindex="0" aria-label="Mapa da cidade. Setas movem, + e − aproximam, 0 enquadra."></canvas>
+
+    <div class="float tl">
+      <div class="search" role="search">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 0 1 5.2 10.4l4.4 4.4-1.4 1.4-4.4-4.4A6.5 6.5 0 1 1 10.5 4zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg>
+        <input id="ac" type="text" placeholder="Buscar rua" autocomplete="off" spellcheck="false"
+               role="combobox" aria-expanded="false" aria-controls="ac-list" aria-autocomplete="list" aria-label="Buscar rua">
+        <button id="ac-clear" class="icon-btn sm" type="button" aria-label="Limpar busca" hidden>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6 10.6 12 5 6.4z"/></svg>
+        </button>
+        <div id="ac-pop" class="pop" hidden>
+          <div class="trie-line" id="ac-trie" hidden><span class="eyebrow">Trie</span><span id="ac-path" class="path"></span></div>
+          <ul id="ac-list" role="listbox" aria-label="Ruas encontradas"></ul>
+        </div>
+      </div>
+
+      <div class="tools" role="radiogroup" aria-label="O que o clique no mapa faz" id="tools">
+        <button type="button" role="radio" aria-checked="true" data-tool="route">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3a3 3 0 0 1 1 5.8V12a2 2 0 0 0 2 2h6a4 4 0 0 1 4 4v.2A3 3 0 1 1 17 18v0a2 2 0 0 0-2-2H9a4 4 0 0 1-4-4V8.8A3 3 0 0 1 6 3z"/></svg>Rota</button>
+        <button type="button" role="radio" aria-checked="false" data-tool="call">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>Chamado</button>
+        <button type="button" role="radio" aria-checked="false" data-tool="road">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v4H4zM6 14h2v6H6zm10 0h2v6h-2zM6 4h2v6H6zm10 0h2v6h-2z"/></svg>Fechar via</button>
+      </div>
+
+      <div class="sevbar" id="sevbar" hidden>
+        <span class="eyebrow" id="sev-label">Gravidade</span>
+        <div class="sev" role="radiogroup" aria-labelledby="sev-label">
+          <button type="button" role="radio" aria-checked="false" data-sev="1" title="Leve"><b>1</b></button>
+          <button type="button" role="radio" aria-checked="false" data-sev="2" title="Baixa"><b>2</b></button>
+          <button type="button" role="radio" aria-checked="true" data-sev="3" title="Média"><b>3</b></button>
+          <button type="button" role="radio" aria-checked="false" data-sev="4" title="Alta"><b>4</b></button>
+          <button type="button" role="radio" aria-checked="false" data-sev="5" title="Crítica"><b>5</b></button>
+        </div>
+        <span class="sev-name" id="sev-name">Média</span>
+      </div>
+    </div>
+
+    <div class="float tr" aria-label="Controles do mapa">
+      <div class="stack">
+        <button type="button" class="icon-btn" id="z-in" aria-label="Aproximar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button>
+        <button type="button" class="icon-btn" id="z-out" aria-label="Afastar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v2H5z"/></svg></button>
+        <button type="button" class="icon-btn" id="z-fit" aria-label="Enquadrar a cidade"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg></button>
+      </div>
+      <div class="stack">
+        <button type="button" class="icon-btn" id="btn-layers" aria-label="Camadas do mapa" aria-expanded="false" aria-controls="layers"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5zm-7.3 8.3L12 15.4l7.3-4.1L21 12.3l-9 5-9-5zm0 4L12 19.4l7.3-4.1L21 16.3l-9 5-9-5z"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-theme" aria-label="Alternar tema"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path id="theme-path" d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
+      </div>
+      <div id="layers" class="menu" hidden>
+        <p class="menu-title">Camadas</p>
+        <label><input type="checkbox" data-layer="traffic" checked><span><b>Trânsito</b><small>Amarelo é lento, vermelho é intenso</small></span></label>
+        <label><input type="checkbox" id="traffic-routing" checked><span><b>Rotas evitam trânsito</b><small>Ruas lentas e intensas custam mais no Dijkstra</small></span></label>
+        <hr class="menu-sep">
+        <label><input type="checkbox" data-layer="qt"><span><b>Quadtree</b><small>Regiões que aceleram a busca do mais próximo</small></span></label>
+        <label><input type="checkbox" data-layer="mst"><span><b>Rede mínima</b><small>Menor conjunto de ruas que liga tudo (Kruskal)</small></span></label>
+        <label><input type="checkbox" data-layer="comp"><span><b>Ilhas</b><small>Áreas isoladas quando ruas fecham (Union-Find)</small></span></label>
+      </div>
+    </div>
+
+    <div class="float bl" id="bl">
+      <section id="tutor" class="card tutor" hidden aria-live="polite">
+        <div class="tutor-head"><span class="eyebrow">Modo tutor</span><span id="tutor-ds" class="ds"></span></div>
+        <p id="tutor-text">Ligado. A cada ação eu explico qual estrutura de dados agiu e por quê.</p>
+      </section>
+      <section id="routecard" class="card routecard" hidden aria-live="polite"></section>
+    </div>
+
+    <div id="hint" class="hint" role="status" aria-live="polite"></div>
+    <div id="legend" class="legend" aria-hidden="true"><i class="sw slow"></i>Lento<i class="sw jam"></i>Intenso</div>
+    <div id="tip" class="tip" hidden></div>
+  </main>
+
+  <aside id="panel" class="panel" aria-label="Painel da cidade">
+    <button type="button" id="sheet-handle" class="sheet-handle" aria-expanded="false" aria-controls="panel-body" aria-label="Abrir painel"><span></span></button>
+    <header class="panel-head">
+      <div class="brand">
+        <h1>ATLAS</h1>
+        <p>Cidade simulada com estruturas de dados</p>
+      </div>
+      <div class="simctl">
+        <div class="clock" aria-label="Horário simulado"><b id="clock">07:30</b><small id="tick">tick 0</small></div>
+        <button type="button" class="icon-btn" id="btn-pause" aria-label="Pausar simulação"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path id="pause-path" d="M7 5h3v14H7zm7 0h3v14h-3z"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-undo" aria-label="Desfazer última via fechada ou reaberta" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V3L2 9l6 6v-4h6a4 4 0 0 1 0 8h-3v2h3a6 6 0 0 0 0-12H8z"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-redo" aria-label="Refazer" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 7V3l6 6-6 6v-4h-6a4 4 0 0 0 0 8h3v2h-3a6 6 0 0 1 0-12h6z"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-tutor" aria-pressed="false" aria-label="Modo tutor: explica qual estrutura agiu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 1 9l11 6 9-4.9V17h2V9zM5 13.2v4L12 21l7-3.8v-4L12 17z"/></svg></button>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Seções do painel">
+        <button type="button" role="tab" id="t-resumo" aria-controls="tab-resumo" aria-selected="true" data-tab="resumo">Resumo</button>
+        <button type="button" role="tab" id="t-chamados" aria-controls="tab-chamados" aria-selected="false" tabindex="-1" data-tab="chamados">Chamados <span id="calls-count" class="count" hidden></span></button>
+        <button type="button" role="tab" id="t-estruturas" aria-controls="tab-estruturas" aria-selected="false" tabindex="-1" data-tab="estruturas">Estruturas</button>
+      </nav>
+    </header>
+
+    <div class="panel-body" id="panel-body">
+      <section id="tab-resumo" class="pane" role="tabpanel" aria-labelledby="t-resumo">
+        <div id="kpis" class="kpis"></div>
+        <details class="block" open>
+          <summary>Acontecendo agora</summary>
+          <ol id="log" class="log"></ol>
+        </details>
+        <details class="block">
+          <summary>Como usar</summary>
+          <ol class="howto">
+            <li><b>Rota.</b> Clique em dois cruzamentos. Você vê o tempo, a distância e quantos nós o Dijkstra e o A* visitaram.</li>
+            <li><b>Chamado.</b> Escolha a gravidade e clique onde alguém precisa de ambulância.</li>
+            <li><b>Fechar via.</b> Clique numa rua para bloquear. Clique de novo para reabrir. Desfazer e refazer ficam no topo do painel.</li>
+          </ol>
+          <button type="button" class="btn ghost" id="btn-tour">Rever o tour de 3 passos</button>
+        </details>
+      </section>
+
+      <section id="tab-chamados" class="pane" role="tabpanel" aria-labelledby="t-chamados" hidden>
+        <div class="row-actions">
+          <button type="button" class="btn" id="btn-random">Criar chamado aleatório</button>
+        </div>
+        <details class="block" open>
+          <summary>Chamados ativos</summary>
+          <div id="calls" class="list"></div>
+        </details>
+        <details class="block" open>
+          <summary>Ambulâncias</summary>
+          <div id="ambs" class="list"></div>
+        </details>
+        <details class="block" id="heap-block">
+          <summary>Fila por dentro <span class="tag">heap binária</span></summary>
+          <canvas id="heap" height="152" aria-label="Desenho da heap de chamados"></canvas>
+          <p id="heap-info" class="muted"></p>
+        </details>
+        <details class="block">
+          <summary>Como um chamado é atendido</summary>
+          <ol class="flow">
+            <li><b>Entra na fila.</b> O mais grave passa na frente; no empate, o mais antigo. <span class="tag">heap binária</span></li>
+            <li><b>Escolhe a ambulância.</b> Pega as 3 livres mais próximas e fica com a de menor tempo de rota. <span class="tag">quadtree + Dijkstra</span></li>
+            <li><b>Vai ao local.</b> Rota tracejada em vermelho. Se uma rua fechar, ela recalcula.</li>
+            <li><b>Leva ao hospital</b> mais próximo, em azul. <span class="tag">KD-Tree</span></li>
+          </ol>
+        </details>
+      </section>
+
+      <section id="tab-estruturas" class="pane" role="tabpanel" aria-labelledby="t-estruturas" hidden>
+        <p class="muted lead">Todas as estruturas foram escritas do zero e rodam no seu navegador, num Web Worker.</p>
+        <details class="block" open>
+          <summary>Estado de cada estrutura</summary>
+          <div id="structs" class="structs"></div>
+        </details>
+        <details class="block" id="route-block">
+          <summary>Rota e cache <span class="tag">Dijkstra · A* · LRU</span></summary>
+          <div id="route-detail" class="muted">Use a ferramenta Rota e clique em dois cruzamentos.</div>
+          <p id="lru-info" class="muted"></p>
+          <ol id="lru-list" class="chips"></ol>
+        </details>
+        <details class="block" id="res-block">
+          <summary>Moradores <span class="tag">Bloom Filter · AVL</span></summary>
+          <p class="muted">Cada morador tem um ID de 6 dígitos. O Bloom Filter diz "com certeza não existe" sem tocar na árvore; quando diz "talvez", a AVL confirma.</p>
+          <form class="field-row" id="res-form">
+            <label class="sr" for="rid">ID do morador</label>
+            <input id="rid" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="ID do morador" autocomplete="off">
+            <button class="btn" type="submit">Consultar</button>
+          </form>
+          <div id="rid-samples" class="chips" aria-label="IDs de exemplo"></div>
+          <button type="button" class="btn ghost" id="btn-range">Listar IDs de 100000 a 100500</button>
+          <p id="res-info" class="result" aria-live="polite"></p>
+        </details>
+        <details class="block" id="bench-block">
+          <summary>Benchmarks <span class="tag">escala log-log</span></summary>
+          <p class="muted">Compara as estruturas próprias com alternativas, aqui no seu navegador, com n de 1.000 a 8.000. O <code>Map</code> do JS é nativo e ganha no tempo absoluto; o que importa é a forma da curva.</p>
+          <button type="button" class="btn" id="btn-bench">Rodar benchmarks</button>
+          <p id="bench-status" class="muted" aria-live="polite"></p>
+          <div id="bench"></div>
+        </details>
+      </section>
+    </div>
+  </aside>
+</div>
+
+<div id="tour" class="tour" hidden>
+  <div class="tour-card" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-text">
+    <p class="eyebrow" id="tour-step">Passo 1 de 3</p>
+    <h2 id="tour-title"></h2>
+    <p id="tour-text"></p>
+    <div class="tour-foot">
+      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <button type="button" class="btn ghost" id="tour-skip">Pular</button>
+      <button type="button" class="btn" id="tour-next">Próximo</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+<!--BODY-END-->
+</body>
+</html>
