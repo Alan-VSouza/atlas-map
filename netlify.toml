@@ -1,0 +1,8 @@
+# Site estático: a pasta web/ já é o site completo (sem build, sem servidor).
+[build]
+  publish = "web"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
