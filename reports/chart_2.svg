@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" font-family="sans-serif" font-size="11">
+<rect width="100%" height="100%" fill="white"/>
+<text x="70" y="22" font-size="14" font-weight="bold">Fila de prioridade (push n + pop n)</text>
+<rect x="70" y="40" width="400" height="270" fill="none" stroke="#999"/>
+<text x="70.0" y="326" text-anchor="middle">500</text>
+<text x="203.3" y="326" text-anchor="middle">1000</text>
+<text x="336.7" y="326" text-anchor="middle">2000</text>
+<text x="470.0" y="326" text-anchor="middle">4000</text>
+<text x="270" y="350" text-anchor="middle">n (escala log)</text>
+<line x1="70" x2="470" y1="310.0" y2="310.0" stroke="#eee"/>
+<text x="64" y="314.0" text-anchor="end">1.2e-04</text>
+<line x1="70" x2="470" y1="242.5" y2="242.5" stroke="#eee"/>
+<text x="64" y="246.5" text-anchor="end">4.2e-04</text>
+<line x1="70" x2="470" y1="175.0" y2="175.0" stroke="#eee"/>
+<text x="64" y="179.0" text-anchor="end">1.5e-03</text>
+<line x1="70" x2="470" y1="107.5" y2="107.5" stroke="#eee"/>
+<text x="64" y="111.5" text-anchor="end">5.6e-03</text>
+<line x1="70" x2="470" y1="40.0" y2="40.0" stroke="#eee"/>
+<text x="64" y="44.0" text-anchor="end">2.1e-02</text>
+<text x="14" y="180" transform="rotate(-90 14 180)" text-anchor="middle">segundos (log)</text>
+<polyline fill="none" stroke="#2563eb" stroke-width="2" points="70.0,164.5 203.3,123.3 336.7,81.7 470.0,40.0"/>
+<circle cx="70.0" cy="164.5" r="3" fill="#2563eb"/>
+<circle cx="203.3" cy="123.3" r="3" fill="#2563eb"/>
+<circle cx="336.7" cy="81.7" r="3" fill="#2563eb"/>
+<circle cx="470.0" cy="40.0" r="3" fill="#2563eb"/>
+<line x1="482" x2="504" y1="54" y2="54" stroke="#2563eb" stroke-width="3"/>
+<text x="510" y="58">BinaryHeap</text>
+<polyline fill="none" stroke="#dc2626" stroke-width="2" points="70.0,310.0 203.3,275.0 336.7,233.4 470.0,193.8"/>
+<circle cx="70.0" cy="310.0" r="3" fill="#dc2626"/>
+<circle cx="203.3" cy="275.0" r="3" fill="#dc2626"/>
+<circle cx="336.7" cy="233.4" r="3" fill="#dc2626"/>
+<circle cx="470.0" cy="193.8" r="3" fill="#dc2626"/>
+<line x1="482" x2="504" y1="72" y2="72" stroke="#dc2626" stroke-width="3"/>
+<text x="510" y="76">heapq (C)</text>
+</svg>
